@@ -1406,11 +1406,13 @@ void FullscreenUI::DrawExitWindow()
 			DoRequestExit();
 		}
 
-		if (HorizontalMenuItem(GetCachedTexture("fullscreenui/desktop-mode.png"), FSUI_CSTR("Desktop Mode"),
-				FSUI_CSTR("Exits Big Picture mode, returning to the desktop interface.")))
-		{
-			DoDesktopMode();
-		}
+		const char warning_txt[] = "XBSX2.0 is an unofficial fork of PCSX2. Please do not contact PCSX2 for any help with Xbox/XBSX2 related issues.";
+		const ImVec2 rev_size(g_medium_font->CalcTextSizeA(g_medium_font->FontSize, FLT_MAX, 0.0f, warning_txt));
+		ImGui::PushFont(g_medium_font);
+		ImGui::SetCursorPos(
+			ImVec2(LayoutScale(10.0f), ImGui::GetWindowHeight() - rev_size.y - LayoutScale(20.0f)));
+		ImGui::Text(warning_txt);
+		ImGui::PopFont();
 	}
 	EndHorizontalMenu();
 
@@ -6542,19 +6544,19 @@ void FullscreenUI::DrawAboutWindow()
 {
 	ImGui::SetNextWindowSize(LayoutScale(1000.0f, 580.0f));
 	ImGui::SetNextWindowPos(ImGui::GetIO().DisplaySize * 0.5f, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-	ImGui::OpenPopup(FSUI_CSTR("About PCSX2"));
+	ImGui::OpenPopup("About XBSX2.0");
 
 	ImGui::PushFont(g_large_font);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, LayoutScale(10.0f));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, LayoutScale(30.0f, 30.0f));
 
-	if (ImGui::BeginPopupModal(FSUI_CSTR("About PCSX2"), &s_about_window_open, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
+	if (ImGui::BeginPopupModal("About XBSX2.0", &s_about_window_open, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
 	{
-		ImGui::TextWrapped("%s", FSUI_CSTR(
-									 "PCSX2 is a free and open-source PlayStation 2 (PS2) emulator. Its purpose is to emulate the PS2's hardware, using a "
-									 "combination of MIPS CPU Interpreters, Recompilers and a Virtual Machine which manages hardware states and PS2 system memory. "
-									 "This allows you to play PS2 games on your PC, with many additional features and benefits."));
-		ImGui::NewLine();
+		ImGui::TextWrapped(
+			"XBSX2.0 is a fork of PCSX2 developed by SirMangler introducing Xbox/UWP support. Please support the original creators." 
+			"PCSX2 is a free and open-source PlayStation 2 (PS2) emulator. Its purpose is to emulate the PS2's hardware, using a "
+			"combination of MIPS CPU Interpreters, Recompilers and a Virtual Machine which manages hardware states and PS2 system memory. "
+			"This allows you to play PS2 games on your PC, with many additional features and benefits.");
 
 		ImGui::TextWrapped("Version: %s", GIT_REV);
 		ImGui::NewLine();
@@ -6573,7 +6575,7 @@ void FullscreenUI::DrawAboutWindow()
 		if (ActiveButton(FSUI_ICONSTR(ICON_FA_PERSON_BOOTH, "Support Forums"), false))
 			ExitFullscreenAndOpenURL(PCSX2_FORUMS_URL);
 
-		if (ActiveButton(FSUI_ICONSTR(ICON_FA_BUG, "GitHub Repository"), false))
+		if (ActiveButton(ICON_FA_BUG " PCSX2 GitHub Repository", false))
 			ExitFullscreenAndOpenURL(PCSX2_GITHUB_URL);
 
 		if (ActiveButton(FSUI_ICONSTR(ICON_FA_NEWSPAPER, "License"), false))
