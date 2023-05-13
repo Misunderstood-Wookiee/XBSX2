@@ -126,31 +126,31 @@ __ri void ImGuiManager::DrawPerformanceOverlay(float& position_y, float scale, f
 			switch (PerformanceMetrics::GetInternalFPSMethod())
 			{
 				case PerformanceMetrics::InternalFPSMethod::GSPrivilegedRegister:
-					text.append_format("G: {:.2f} [P] | V: {:.2f}", PerformanceMetrics::GetInternalFPS(),
+					fmt::format_to(std::back_inserter(text), "{:.2f} FPS", PerformanceMetrics::GetInternalFPS(),
 						PerformanceMetrics::GetFPS());
 					break;
 
 				case PerformanceMetrics::InternalFPSMethod::DISPFBBlit:
-					text.append_format("G: {:.2f} [B] | V: {:.2f}", PerformanceMetrics::GetInternalFPS(),
+					fmt::format_to(std::back_inserter(text), "{:.2f} FPS", PerformanceMetrics::GetInternalFPS(),
 						PerformanceMetrics::GetFPS());
 					break;
 
 				case PerformanceMetrics::InternalFPSMethod::None:
 				default:
-					text.append_format("V: {:.2f}", PerformanceMetrics::GetFPS());
+					fmt::format_to(std::back_inserter(text), "{:.2f} FPS", PerformanceMetrics::GetFPS());
 					break;
 			}
 			first = false;
 		}
 		if (GSConfig.OsdShowSpeed)
 		{
-			text.append_format("{}{}%", first ? "" : " | ", static_cast<u32>(std::round(speed)));
+			fmt::format_to(std::back_inserter(text), " ({}%)", static_cast<u32>(std::round(speed)));
 
-			const float target_speed = VMManager::GetTargetSpeed();
-			if (target_speed == 0.0f)
-				text.append(" (Max)");
+			// We read the main config here, since MTGS doesn't get updated with speed toggles.
+			/* if (EmuConfig.GS.LimitScalar == 0.0f)
+				text += " (Max)";
 			else
-				text.append_format(" ({:.0f}%)", target_speed * 100.0f);
+				fmt::format_to(std::back_inserter(text), " ({:.0f}%)", EmuConfig.GS.LimitScalar * 100.0f); */
 		}
 		if (!text.empty())
 		{
@@ -183,17 +183,15 @@ __ri void ImGuiManager::DrawPerformanceOverlay(float& position_y, float scale, f
 			GSgetInternalResolution(&width, &height);
 
 			text.clear();
-			text.append_format("{}x{} {} {}", width, height, ReportVideoMode(), ReportInterlaceMode());
+			fmt::format_to(std::back_inserter(text), "{}x{}{} {}", width, height, ReportInterlaceMode(), ReportVideoMode());
 			DRAW_LINE(fixed_font, text.c_str(), IM_COL32(255, 255, 255, 255));
 		}
 
 		if (GSConfig.OsdShowCPU)
 		{
 			text.clear();
-			text.append_format("{} QF | {:.2f}ms | {:.2f}ms | {:.2f}ms",
-				MTGS::GetCurrentVsyncQueueSize() - 1, // we subtract one for the current frame
-				PerformanceMetrics::GetMinimumFrameTime(), PerformanceMetrics::GetAverageFrameTime(),
-				PerformanceMetrics::GetMaximumFrameTime());
+			fmt::format_to(std::back_inserter(text), "Frame Time: {:.2f}ms", PerformanceMetrics::GetMinimumFrameTime(),
+				PerformanceMetrics::GetAverageFrameTime(), PerformanceMetrics::GetMaximumFrameTime());
 			DRAW_LINE(fixed_font, text.c_str(), IM_COL32(255, 255, 255, 255));
 
 			text.clear();

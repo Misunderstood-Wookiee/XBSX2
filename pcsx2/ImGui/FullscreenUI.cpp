@@ -1186,63 +1186,10 @@ void FullscreenUI::DrawLandingTemplate(ImVec2* menu_pos, ImVec2* menu_size)
 
 	if (BeginFullscreenWindow(ImVec2(0.0f, 0.0f), heading_size, "landing_heading", UIPrimaryColor))
 	{
-		ImFont* const heading_font = g_large_font;
-		ImDrawList* const dl = ImGui::GetWindowDrawList();
-		SmallString heading_str;
-
-		ImGui::PushFont(heading_font);
-		ImGui::PushStyleColor(ImGuiCol_Text, UIPrimaryTextColor);
-
-		// draw branding
-		{
-			const ImVec2 logo_pos = LayoutScale(LAYOUT_MENU_BUTTON_X_PADDING, LAYOUT_MENU_BUTTON_Y_PADDING);
-			const ImVec2 logo_size = LayoutScale(LAYOUT_MENU_BUTTON_HEIGHT_NO_SUMMARY, LAYOUT_MENU_BUTTON_HEIGHT_NO_SUMMARY);
-			dl->AddImage(GetCachedTexture("icons/AppIconLarge.png")->GetNativeHandle(), logo_pos, logo_pos + logo_size);
-			dl->AddText(heading_font, heading_font->FontSize,
-				ImVec2(logo_pos.x + logo_size.x + LayoutScale(LAYOUT_MENU_BUTTON_X_PADDING), logo_pos.y),
-				ImGui::GetColorU32(ImGuiCol_Text), "PCSX2");
-		}
-
-		// draw time
-		ImVec2 time_pos;
-		{
-			heading_str.format(FSUI_FSTR("{:%H:%M}"), fmt::localtime(std::time(nullptr)));
-
-			const ImVec2 time_size = heading_font->CalcTextSizeA(heading_font->FontSize, FLT_MAX, 0.0f, "00:00");
-			time_pos = ImVec2(heading_size.x - LayoutScale(LAYOUT_MENU_BUTTON_X_PADDING) - time_size.x,
-				LayoutScale(LAYOUT_MENU_BUTTON_Y_PADDING));
-			ImGui::RenderTextClipped(time_pos, time_pos + time_size, heading_str.c_str(), heading_str.end_ptr(), &time_size);
-		}
-
-		// draw achievements info
-		if (Achievements::IsActive())
-		{
-			const auto lock = Achievements::GetLock();
-			const char* username = Achievements::GetLoggedInUserName();
-			if (username)
-			{
-				const ImVec2 name_size = heading_font->CalcTextSizeA(heading_font->FontSize, FLT_MAX, 0.0f, username);
-				const ImVec2 name_pos =
-					ImVec2(time_pos.x - name_size.x - LayoutScale(LAYOUT_MENU_BUTTON_X_PADDING), time_pos.y);
-				ImGui::RenderTextClipped(name_pos, name_pos + name_size, username, nullptr, &name_size);
-
-				// TODO: should we cache this? heap allocations bad...
-				std::string badge_path = Achievements::GetLoggedInUserBadgePath();
-				if (!badge_path.empty()) [[likely]]
-				{
-					const ImVec2 badge_size =
-						LayoutScale(LAYOUT_MENU_BUTTON_HEIGHT_NO_SUMMARY, LAYOUT_MENU_BUTTON_HEIGHT_NO_SUMMARY);
-					const ImVec2 badge_pos =
-						ImVec2(name_pos.x - badge_size.x - LayoutScale(LAYOUT_MENU_BUTTON_X_PADDING), time_pos.y);
-
-					dl->AddImage(GetCachedTextureAsync(badge_path)->GetNativeHandle(), badge_pos,
-						badge_pos + badge_size);
-				}
-			}
-		}
-
-		ImGui::PopStyleColor();
-		ImGui::PopFont();
+		const float image_size = LayoutScale(700.f);
+		ImGui::SetCursorPos(
+			ImVec2((ImGui::GetWindowWidth() * 0.5f) - (image_size * 0.5f), (ImGui::GetWindowHeight() * 0.5f) - (image_size * 0.5f)));
+		ImGui::Image(s_app_icon_texture->GetNativeHandle(), ImVec2(image_size, image_size));
 	}
 	EndFullscreenWindow();
 }
@@ -1258,8 +1205,9 @@ void FullscreenUI::DrawLandingWindow()
 	{
 		ResetFocusHere();
 
-		if (HorizontalMenuItem(GetCachedTexture("fullscreenui/address-book-new.png"), FSUI_CSTR("Game List"),
-				FSUI_CSTR("Launch a game from images scanned from your game directories.")))
+		BeginMenuButtons(5, 0.5f);
+
+		if (MenuButton(ICON_FA_LIST " Game List", "Launch a game from images scanned from your game directories."))
 		{
 			SwitchToGameList();
 		}
@@ -1277,16 +1225,14 @@ void FullscreenUI::DrawLandingWindow()
 		{
 			SwitchToSettings();
 		}
-
-		if (HorizontalMenuItem(GetCachedTexture("fullscreenui/exit.png"), FSUI_CSTR("Exit"),
-				FSUI_CSTR("Return to desktop mode, or exit the application.")) ||
-			(!AreAnyDialogsOpen() && WantsToCloseMenu()))
+#ifndef WINRT_XBOX
+		if (MenuButton(ICON_FA_COMPACT_DISC " Start Disc", "Start a game from a disc in your PC's DVD drive."))
 		{
 			s_current_main_window = MainWindowType::Exit;
 			QueueResetFocus();
 		}
-	}
-	EndHorizontalMenu();
+#endif // !WINRT_XBOX
+		
 
 	ImGui::PopStyleColor();
 
@@ -1336,68 +1282,22 @@ void FullscreenUI::DrawStartGameWindow()
 		if (HorizontalMenuItem(GetCachedTexture("fullscreenui/drive-cdrom.png"), FSUI_CSTR("Start Disc"),
 				FSUI_CSTR("Start a game from a disc in your PC's DVD drive.")))
 		{
-			DoStartDisc();
-		}
+			ImVec2 fullscreen_pos;
 
-		if (HorizontalMenuItem(GetCachedTexture("fullscreenui/start-bios.png"), FSUI_CSTR("Start BIOS"),
-				FSUI_CSTR("Start the console without any disc inserted.")))
-		{
-			DoStartBIOS();
-		}
+			if (FloatingButton(
+					ICON_FA_QUESTION_CIRCLE, 0.0f, 0.0f, -1.0f, -1.0f, 1.0f, 0.0f, true, g_large_font, &fullscreen_pos))
+				OpenAboutWindow();
 
-		// https://www.iconpacks.net/free-icon/arrow-back-3783.html
-		if (HorizontalMenuItem(GetCachedTexture("fullscreenui/back-icon.png"), FSUI_CSTR("Back"),
-				FSUI_CSTR("Return to the previous menu.")) ||
-			(!AreAnyDialogsOpen() && WantsToCloseMenu()))
-		{
-			s_current_main_window = MainWindowType::Landing;
-			QueueResetFocus();
-		}
-	}
-	EndHorizontalMenu();
+			if (FloatingButton(ICON_FA_LIGHTBULB, fullscreen_pos.x, 0.0f, -1.0f, -1.0f, -1.0f, 0.0f, true, g_large_font, &fullscreen_pos))
+				ToggleTheme();
 
-	ImGui::PopStyleColor();
+#ifndef WINRT_XBOX
+			if (FloatingButton(ICON_FA_WINDOW_CLOSE, fullscreen_pos.x, 0.0f, -1.0f, -1.0f, -1.0f, 0.0f, true, g_large_font, &fullscreen_pos))
+				DoRequestExit();
 
-	if (!AreAnyDialogsOpen())
-	{
-		if (ImGui::IsKeyPressed(ImGuiKey_NavGamepadMenu, false) || ImGui::IsKeyPressed(ImGuiKey_F1, false))
-			OpenSaveStateSelector(true);
-	}
-
-	if (IsGamepadInputSource())
-	{
-		SetFullscreenFooterText(std::array{std::make_pair(ICON_PF_XBOX_DPAD_LEFT_RIGHT, FSUI_VSTR("Navigate")),
-			std::make_pair(ICON_PF_BUTTON_Y, FSUI_VSTR("Load Global State")),
-			std::make_pair(ICON_PF_BUTTON_A, FSUI_VSTR("Select")),
-			std::make_pair(ICON_PF_BUTTON_B, FSUI_VSTR("Back"))});
-	}
-	else
-	{
-		SetFullscreenFooterText(std::array{std::make_pair(ICON_PF_ARROW_LEFT ICON_PF_ARROW_RIGHT, FSUI_VSTR("Navigate")),
-			std::make_pair(ICON_PF_F1, FSUI_VSTR("Load Global State")),
-			std::make_pair(ICON_PF_ENTER, FSUI_VSTR("Select")),
-			std::make_pair(ICON_PF_ESC, FSUI_VSTR("Back"))});
-	}
-}
-
-void FullscreenUI::DrawExitWindow()
-{
-	ImVec2 menu_pos, menu_size;
-	DrawLandingTemplate(&menu_pos, &menu_size);
-
-	ImGui::PushStyleColor(ImGuiCol_Text, UIBackgroundTextColor);
-
-	if (BeginHorizontalMenu("exit_window", menu_pos, menu_size, 3))
-	{
-		ResetFocusHere();
-
-		// https://www.iconpacks.net/free-icon/arrow-back-3783.html
-		if (HorizontalMenuItem(GetCachedTexture("fullscreenui/back-icon.png"), FSUI_CSTR("Back"),
-				FSUI_CSTR("Return to the previous menu.")) ||
-			WantsToCloseMenu())
-		{
-			s_current_main_window = MainWindowType::Landing;
-			QueueResetFocus();
+			if (FloatingButton(ICON_FA_EXPAND, fullscreen_pos.x, 0.0f, -1.0f, -1.0f, -1.0f, 0.0f, true, g_large_font, &fullscreen_pos))
+				DoToggleFullscreen();
+#endif // !WINRT_XBOX
 		}
 
 		if (HorizontalMenuItem(GetCachedTexture("fullscreenui/exit.png"), FSUI_CSTR("Exit PCSX2"),
@@ -3080,26 +2980,30 @@ void FullscreenUI::DrawInterfaceSettingsPage()
 
 	MenuHeading(FSUI_CSTR("Behaviour"));
 
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_PF_SNOOZE, "Inhibit Screensaver"),
-		FSUI_CSTR("Prevents the screen saver from activating and the host from sleeping while emulation is running."), "EmuCore",
-		"InhibitScreensaver", true);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_USER_CIRCLE, "Enable Discord Presence"),
-		FSUI_CSTR("Shows the game you are currently playing as part of your profile on Discord."), "UI", "DiscordPresence", false);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_PAUSE, "Pause On Start"), FSUI_CSTR("Pauses the emulator when a game is started."), "UI",
-		"StartPaused", false);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_EYE, "Pause On Focus Loss"),
-		FSUI_CSTR("Pauses the emulator when you minimize the window or switch to another application, and unpauses when you switch back."),
-		"UI", "PauseOnFocusLoss", false);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_GAMEPAD, "Pause On Controller Disconnection"),
-		FSUI_CSTR("Pauses the emulator when a controller with bindings is disconnected."), "UI", "PauseOnControllerDisconnection", false);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_LIST_ALT, "Pause On Menu"),
-		FSUI_CSTR("Pauses the emulator when you open the quick menu, and unpauses when you close it."), "UI", "PauseOnMenu", true);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_POWER_OFF, "Confirm Shutdown"),
-		FSUI_CSTR("Determines whether a prompt will be displayed to confirm shutting down the emulator/game when the hotkey is pressed."),
-		"UI", "ConfirmShutdown", true);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_SAVE, "Save State On Shutdown"),
-		FSUI_CSTR("Automatically saves the emulator state when powering down or exiting. You can then resume directly from where you left "
-				  "off next time."),
+	
+#ifdef WITH_DISCORD_PRESENCE
+	DrawToggleSetting(bsi, "Enable Discord Presence", "Shows the game you are currently playing as part of your profile on Discord.", "UI",
+		"DiscordPresence", false);
+#endif
+	DrawToggleSetting(bsi, ICON_FA_PAUSE " Pause On Start", "Pauses the emulator when a game is started.", "UI", "StartPaused", false);
+
+#ifndef WINRT_XBOX
+	DrawToggleSetting(bsi, ICON_FA_MAGIC " Inhibit Screensaver",
+		"Prevents the screen saver from activating and the host from sleeping while emulation is running.", "EmuCore", "InhibitScreensaver",
+		true);
+	DrawToggleSetting(bsi, ICON_FA_VIDEO " Pause On Focus Loss",
+		"Pauses the emulator when you minimize the window or switch to another application, and unpauses when you switch back.", "UI",
+		"PauseOnFocusLoss", false);
+#endif
+
+	DrawToggleSetting(bsi, ICON_FA_WINDOW_MAXIMIZE " Pause On Menu",
+		"Pauses the emulator when you open the quick menu, and unpauses when you close it.", "UI", "PauseOnMenu", true);
+	DrawToggleSetting(bsi, ICON_FA_POWER_OFF " Confirm Shutdown",
+		"Determines whether a prompt will be displayed to confirm shutting down the emulator/game when the hotkey is pressed.", "UI",
+		"ConfirmShutdown", true);
+	DrawToggleSetting(bsi, ICON_FA_SAVE " Save State On Shutdown",
+		"Automatically saves the emulator state when powering down or exiting. You can then resume directly from where you left off next "
+		"time.",
 		"EmuCore", "SaveStateOnShutdown", false);
 	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_ARCHIVE, "Create Save State Backups"),
 		FSUI_CSTR("Creates a backup copy of a save state if it already exists when the save is created. The backup copy has a .backup suffix"),
@@ -3110,21 +3014,20 @@ void FullscreenUI::DrawInterfaceSettingsPage()
 		ImGuiFullscreen::SetTheme(bsi->GetBoolValue("UI", "UseLightFullscreenUITheme", false));
 	}
 
-	MenuHeading(FSUI_CSTR("Game Display"));
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_TV, "Start Fullscreen"),
-		FSUI_CSTR("Automatically switches to fullscreen mode when a game is started."), "UI", "StartFullscreen", false);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_MOUSE, "Double-Click Toggles Fullscreen"),
-		FSUI_CSTR("Switches between full screen and windowed when the window is double-clicked."), "UI", "DoubleClickTogglesFullscreen",
-		true);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_MOUSE_POINTER, "Hide Cursor In Fullscreen"),
-		FSUI_CSTR("Hides the mouse pointer/cursor when the emulator is in fullscreen mode."), "UI", "HideMouseCursor", false);
-
-	MenuHeading(FSUI_CSTR("On-Screen Display"));
-	DrawIntSpinBoxSetting(bsi, FSUI_ICONSTR(ICON_FA_SEARCH, "OSD Scale"),
-		FSUI_CSTR("Determines how large the on-screen messages and monitor are."), "EmuCore/GS", "OsdScale", 100, 25, 500, 1, FSUI_CSTR("%d%%"));
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_LIST, "Show Messages"),
-		FSUI_CSTR(
-			"Shows on-screen-display messages when events occur such as save states being created/loaded, screenshots being taken, etc."),
+#ifndef WINRT_XBOX
+	MenuHeading("Game Display");
+	DrawToggleSetting(bsi, ICON_FA_TV " Start Fullscreen", "Automatically switches to fullscreen mode when the program is started.", "UI",
+		"StartFullscreen", false);
+	DrawToggleSetting(bsi, ICON_FA_MOUSE " Double-Click Toggles Fullscreen",
+		"Switches between full screen and windowed when the window is double-clicked.", "UI", "DoubleClickTogglesFullscreen", true);
+	DrawToggleSetting(bsi, ICON_FA_MOUSE_POINTER " Hide Cursor In Fullscreen",
+		"Hides the mouse pointer/cursor when the emulator is in fullscreen mode.", "UI", "HideMouseCursor", false);
+#endif
+	MenuHeading("On-Screen Display");
+	DrawIntSpinBoxSetting(bsi, ICON_FA_SEARCH " OSD Scale", "Determines how large the on-screen messages and monitor are.", "EmuCore/GS",
+		"OsdScale", 100, 25, 500, 1, "%d%%");
+	DrawToggleSetting(bsi, ICON_FA_LIST " Show Messages",
+		"Shows on-screen-display messages when events occur such as save states being created/loaded, screenshots being taken, etc.",
 		"EmuCore/GS", "OsdShowMessages", true);
 	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_TACHOMETER_ALT, "Show Speed"),
 		FSUI_CSTR("Shows the current emulation speed of the system in the top-right corner of the display as a percentage."), "EmuCore/GS",
@@ -4263,15 +4166,14 @@ void FullscreenUI::DrawControllerSettingsPage()
 	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_WIFI, "SDL DualShock 4 / DualSense Enhanced Mode"),
 		FSUI_CSTR("Provides vibration and LED control support over Bluetooth."), "InputSources", "SDLControllerEnhancedMode", false,
 		bsi->GetBoolValue("InputSources", "SDL", true), false);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_LIGHTBULB, "SDL DualSense Player LED"),
-		FSUI_CSTR("Enable/Disable the Player LED on DualSense controllers."), "InputSources", "SDLPS5PlayerLED", false,
-		bsi->GetBoolValue("InputSources", "SDLControllerEnhancedMode", true), false);
-#ifdef _WIN32
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_COG, "SDL Raw Input"), FSUI_CSTR("Allow SDL to use raw access to input devices."),
-		"InputSources", "SDLRawInput", false, bsi->GetBoolValue("InputSources", "SDL", true), false);
-	DrawToggleSetting(bsi, FSUI_ICONSTR(ICON_FA_COG, "Enable XInput Input Source"),
-		FSUI_CSTR("The XInput source provides support for XBox 360/XBox One/XBox Series controllers."), "InputSources", "XInput", false,
-		true, false);
+#endif
+#if defined(SDL_BUILD) && defined(_WIN32)
+	DrawToggleSetting(bsi, ICON_FA_COG " SDL Raw Input", "Allow SDL to use raw access to input devices.", "InputSources", "SDLRawInput",
+		false, bsi->GetBoolValue("InputSources", "SDL", true), false);
+#endif
+#if _WIN32 && !WINRT_XBOX
+	DrawToggleSetting(bsi, ICON_FA_COG " Enable XInput Input Source",
+		"The XInput source provides support for XBox 360/XBox One/XBox Series controllers.", "InputSources", "XInput", false, true, false);
 #endif
 
 	MenuHeading(FSUI_CSTR("Multitap"));
@@ -6133,9 +6035,9 @@ void FullscreenUI::DrawGameGrid(const ImVec2& heading_size)
 
 	const ImGuiStyle& style = ImGui::GetStyle();
 
-	const float title_spacing = LayoutScale(10.0f);
-	const float item_spacing = LayoutScale(20.0f);
-	const float item_width_with_spacing = std::floor(LayoutScale(LAYOUT_SCREEN_WIDTH / 5.0f));
+	const float title_spacing = LayoutScale(5.0f);
+	const float item_spacing = LayoutScale(10.0f);
+	const float item_width_with_spacing = std::floor(LayoutScale(LAYOUT_SCREEN_WIDTH / 7.5f));
 	const float item_width = item_width_with_spacing - item_spacing;
 	const float image_width = item_width - (style.FramePadding.x * 2.0f);
 	const float image_height = image_width * 1.33f;
