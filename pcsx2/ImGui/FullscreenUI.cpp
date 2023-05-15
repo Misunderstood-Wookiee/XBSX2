@@ -1225,16 +1225,17 @@ void FullscreenUI::DrawLandingWindow()
 		{
 			SwitchToSettings();
 		}
+
 #ifndef WINRT_XBOX
 		if (MenuButton(ICON_FA_COMPACT_DISC " Start Disc", "Start a game from a disc in your PC's DVD drive."))
 		{
 			s_current_main_window = MainWindowType::Exit;
 			QueueResetFocus();
 		}
-#endif // !WINRT_XBOX
+#endif
 		
-
-	ImGui::PopStyleColor();
+		if (MenuButton(ICON_FA_SLIDERS_H " Settings", "Change settings for the emulator."))
+			SwitchToSettings();
 
 	if (!AreAnyDialogsOpen())
 	{
