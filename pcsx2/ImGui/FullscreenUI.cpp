@@ -1289,16 +1289,17 @@ void FullscreenUI::DrawStartGameWindow()
 					ICON_FA_QUESTION_CIRCLE, 0.0f, 0.0f, -1.0f, -1.0f, 1.0f, 0.0f, true, g_large_font, &fullscreen_pos))
 				OpenAboutWindow();
 
+#ifndef WINRT_XBOX
 			if (FloatingButton(ICON_FA_LIGHTBULB, fullscreen_pos.x, 0.0f, -1.0f, -1.0f, -1.0f, 0.0f, true, g_large_font, &fullscreen_pos))
 				ToggleTheme();
 
-#ifndef WINRT_XBOX
+
 			if (FloatingButton(ICON_FA_WINDOW_CLOSE, fullscreen_pos.x, 0.0f, -1.0f, -1.0f, -1.0f, 0.0f, true, g_large_font, &fullscreen_pos))
 				DoRequestExit();
 
 			if (FloatingButton(ICON_FA_EXPAND, fullscreen_pos.x, 0.0f, -1.0f, -1.0f, -1.0f, 0.0f, true, g_large_font, &fullscreen_pos))
 				DoToggleFullscreen();
-#endif // !WINRT_XBOX
+#endif
 		}
 
 		if (HorizontalMenuItem(GetCachedTexture("fullscreenui/exit.png"), FSUI_CSTR("Exit PCSX2"),
@@ -3026,7 +3027,7 @@ void FullscreenUI::DrawInterfaceSettingsPage()
 #endif
 	MenuHeading("On-Screen Display");
 	DrawIntSpinBoxSetting(bsi, ICON_FA_SEARCH " OSD Scale", "Determines how large the on-screen messages and monitor are.", "EmuCore/GS",
-		"OsdScale", 100, 25, 500, 25, "%d%%");
+		"OsdScale", 200, 100, 500, 25, "%d%%");
 	DrawToggleSetting(bsi, ICON_FA_LIST " Show Messages",
 		"Shows on-screen-display messages when events occur such as save states being created/loaded, screenshots being taken, etc.",
 		"EmuCore/GS", "OsdShowMessages", true);
@@ -3833,6 +3834,43 @@ void FullscreenUI::DrawGraphicsSettingsPage(SettingsInterface* bsi, bool show_ad
 
 void FullscreenUI::DrawAudioSettingsPage()
 {
+	static constexpr const char* synchronization_modes[] = {
+		"TimeStretch (Recommended)",
+		"Async Mix (Breaks some games!)",
+		"None (Audio can skip.)",
+	};
+	static constexpr const char* expansion_modes[] = {
+		"Stereo (None, Default)",
+		"Quadrafonic",
+		"Surround 5.1",
+		"Surround 7.1",
+	};
+	static constexpr const char* output_entries[] = {
+		"No Sound (Emulate SPU2 only)",
+#ifdef SPU2X_CUBEB
+		"Cubeb (Cross-platform)",
+#endif
+#if _WIN32 && !WINRT_XBOX
+		"XAudio2",
+#endif
+	};
+	static constexpr const char* output_values[] = {
+		"nullout",
+#ifdef SPU2X_CUBEB
+		"cubeb",
+#endif
+#ifdef _WIN32
+		"xaudio2",
+#endif
+	};
+#if defined(SPU2X_CUBEB)
+	static constexpr const char* default_output_module = "cubeb";
+#elif defined(_WIN32)
+	static constexpr const char* default_output_module = "xaudio2";
+#else
+	static constexpr const char* default_output_module = "nullout";
+#endif
+
 	SettingsInterface* bsi = GetEditingSettingsInterface();
 
 	BeginMenuButtons();
