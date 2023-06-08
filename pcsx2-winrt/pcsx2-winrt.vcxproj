@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220418.1\build\native\Microsoft.Windows.CppWinRT.props')" />
   <Import Project="$(SolutionDir)common\vsprops\BaseProjectConfig.props" />
   <Import Project="$(SolutionDir)common\vsprops\ProjectConfigAVX2.props" />
@@ -49,7 +48,7 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)common\vsprops\common.props" />
     <Import Project="$(SolutionDir)common\vsprops\BaseProperties.props" />
-    <Import Project="$(SolutionDir)common\vsprops\3rdpartyDeps.props" />
+    <Import Project="$(SolutionDir)common\vsprops\CommonLibrary.props" />
     <Import Condition="$(Configuration.Contains(Debug))" Project="$(SolutionDir)common\vsprops\CodeGen_Debug.props" />
     <Import Condition="$(Configuration.Contains(Devel))" Project="$(SolutionDir)common\vsprops\CodeGen_Devel.props" />
     <Import Condition="$(Configuration.Contains(Release))" Project="$(SolutionDir)common\vsprops\CodeGen_Release.props" />
@@ -59,23 +58,26 @@
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
-    <AppxBundle>Always</AppxBundle>
+    <AppxBundle>Never</AppxBundle>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <PackageCertificateKeyFile>pcsx2-winrt_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxPackageDir>D:\TheRhysWyrill\Downloads\Emu Stuff\AppPackages\</AppxPackageDir>
+    <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\xbyak;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\fmt\fmt\include;%(AdditionalIncludeDirectories);</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\freetype\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\libpng;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\rapidyaml\rapidyaml\ext\c4core\src\c4\ext\fast_float\include;%(AdditionalIncludeDirectories);</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\simpleini\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\xbyak;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\xz\xz\src\liblzma\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\libpng;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\simpleini\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\rapidyaml\rapidyaml\ext\c4core\src\c4\ext\fast_float\include;%(AdditionalIncludeDirectories);</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)pcsx2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <!-- Needed for moc pch -->
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(ProjectDir)\Settings;$(ProjectDir)\GameList</AdditionalIncludeDirectories>
@@ -83,13 +85,12 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>PrecompiledHeader.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pcsx2.pch</PrecompiledHeaderOutputFile>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;LZMA_API_STATIC;BUILD_DX=1;ENABLE_RAINTEGRATION;ENABLE_ACHIEVEMENTS;DIRECTINPUT_VERSION=0x0800;PCSX2_CORE;WINRT_XBOX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;LZMA_API_STATIC;BUILD_DX=1;ENABLE_RAINTEGRATION;ENABLE_ACHIEVEMENTS;DIRECTINPUT_VERSION=0x0800;PCSX2_CORE;WINRT_XBOX;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="$(Configuration.Contains(Debug))">PCSX2_DEBUG;PCSX2_DEVBUILD;_SECURE_SCL_=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="$(Configuration.Contains(Devel))">PCSX2_DEVEL;PCSX2_DEVBUILD;NDEBUG;_SECURE_SCL_=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="$(Configuration.Contains(Release))">NDEBUG;_SECURE_SCL_=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="!$(Configuration.Contains(AVX2))">_M_SSE=0x401;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="$(Configuration.Contains(AVX2))">_M_SSE=0x501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions>UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnableEnhancedInstructionSet Condition="!$(Configuration.Contains(AVX2)) Or $(Configuration.Contains(Clang))">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="$(Configuration.Contains(AVX2)) And !$(Configuration.Contains(Clang))">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <AdditionalOptions Condition="$(Configuration.Contains(Clang)) And !$(Configuration.Contains(AVX2))"> -march=nehalem %(AdditionalOptions)</AdditionalOptions>
@@ -141,7 +142,7 @@
     <ProjectReference Include="$(SolutionDir)common\common.vcxproj">
       <Project>{4639972e-424e-4e13-8b07-ca403c481346}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)pcsx2\pcsx2core.vcxproj">
+    <ProjectReference Include="$(SolutionDir)pcsx2\pcsx2.vcxproj">
       <Project>{6c7986c4-3e4d-4dcc-b3c6-6bb12b238995}</Project>
     </ProjectReference>
     <ProjectReference Include="$(SolutionDir)3rdparty\glad\glad.vcxproj">
@@ -162,12 +163,12 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
-      <PreprocessorDefinitions>_DEBUG;ENABLE_ACHIEVEMENTS;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)' == 'Release' or '$(Configuration)' == 'Release AVX2'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;ENABLE_ACHIEVEMENTS;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -202,10 +203,7 @@
     <None Include="resources\GameIndex.yaml">
       <DeploymentContent>true</DeploymentContent>
     </None>
-    <None Include="resources\cheats_ws.zip">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
-    <None Include="resources\cheats_ni.zip">
+    <None Include="resources\patches.zip">
       <DeploymentContent>true</DeploymentContent>
     </None>
   </ItemGroup>

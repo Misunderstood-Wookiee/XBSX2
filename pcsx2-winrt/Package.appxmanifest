@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"  xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10" IgnorableNamespaces="uap mp rescap iot">
   <Identity
-    Name="595c25f0-b370-4d7a-9b14-3027fbd69ecf"
+    Name="XBSX2"
     Publisher="CN=SirMangler"
-    Version="2.0.1" />
+    Version="2.0.2.0" />
   <mp:PhoneIdentity PhoneProductId="595c25f0-b370-4d7a-9b14-3027fbd69ecf" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
   <Properties>
     <DisplayName>pcsx2-winrt</DisplayName>
