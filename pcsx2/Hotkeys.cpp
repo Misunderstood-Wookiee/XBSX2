@@ -238,7 +238,7 @@ DEFINE_HOTKEY("SaveStateToSlot", TRANSLATE_NOOP("Hotkeys", "Save States"),
 		DEFINE_HOTKEY("LoadStateFromSlot", TRANSLATE_NOOP("Hotkeys", "Save States"),
 			TRANSLATE_NOOP("Hotkeys", "Load State From Selected Slot"), [](s32 pressed) {
 		if (!pressed && VMManager::HasValidVM())
-			Host::RunOnCPUThread([]() { HotkeyLoadStateSlot(s_current_save_slot); });
+			Host::RunOnCPUThread([]() { VMManager::LoadStateFromSlot(s_current_save_slot); });
 	})
 DEFINE_HOTKEY("SaveStateAndSelectNextSlot", TRANSLATE_NOOP("Hotkeys", "Save States"),
 	TRANSLATE_NOOP("Hotkeys", "Save State and Select Next Slot"), [](s32 pressed) {

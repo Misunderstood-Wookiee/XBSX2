@@ -27,7 +27,6 @@
 
 #include "common/Assertions.h"
 #include "common/Console.h"
-#include "common/Exceptions.h"
 #include "common/FileSystem.h"
 #include "common/MemorySettingsInterface.h"
 #include "common/Path.h"
@@ -38,11 +37,11 @@
 #include "pcsx2/ImGui/ImGuiManager.h"
 #include "pcsx2/Input/InputManager.h"
 #include "pcsx2/LogSink.h"
-#include "pcsx2/GS.h"
 #include "pcsx2/GS/GS.h"
 #include "pcsx2/GSDumpReplayer.h"
 #include "pcsx2/Host.h"
 #include "pcsx2/INISettingsInterface.h"
+#include "pcsx2/MTGS.h"
 #include "pcsx2/PAD/Host/PAD.h"
 #include "pcsx2/PerformanceMetrics.h"
 #include "pcsx2/VMManager.h"
@@ -78,7 +77,6 @@ namespace WinRTHost
 } // namespace WinRTHost
 
 static std::unique_ptr<INISettingsInterface> s_settings_interface;
-alignas(16) static SysMtgsThread s_mtgs_thread;
 
 const IConsoleWriter* PatchesCon = &Console;
 BEGIN_HOTKEY_LIST(g_host_hotkeys)
@@ -277,8 +275,8 @@ void Host::OnVMResumed()
 {
 }
 
-void Host::OnGameChanged(const std::string& disc_path, const std::string& elf_override, const std::string& game_serial,
-	const std::string& game_name, u32 game_crc)
+void Host::OnGameChanged(const std::string& title, const std::string& elf_override, const std::string& disc_path,
+	const std::string& disc_serial, u32 disc_crc, u32 current_crc)
 {
 }
 
@@ -324,6 +322,14 @@ void Host::SetFullscreen(bool enabled)
 {
 }
 
+void Host::OnCaptureStarted(const std::string& filename)
+{
+}
+
+void Host::OnCaptureStopped()
+{
+}
+
 void Host::RequestExit(bool allow_confirm)
 {
 	s_running = false;
@@ -348,11 +354,6 @@ std::optional<u32> InputManager::ConvertHostKeyboardStringToCode(const std::stri
 std::optional<std::string> InputManager::ConvertHostKeyboardCodeToString(u32 code)
 {
 	return std::nullopt;
-}
-
-SysMtgsThread& GetMTGS()
-{
-	return s_mtgs_thread;
 }
 
 std::optional<WindowInfo> WinRTHost::GetPlatformWindowInfo()
@@ -394,6 +395,18 @@ std::optional<WindowInfo> WinRTHost::GetPlatformWindowInfo()
 void Host::VSyncOnCPUThread()
 {
 	WinRTHost::ProcessEventQueue();
+}
+
+s32 Host::Internal::GetTranslatedStringImpl(
+	const std::string_view& context, const std::string_view& msg, char* tbuf, size_t tbuf_space)
+{
+	if (msg.size() > tbuf_space)
+		return -1;
+	else if (msg.empty())
+		return 0;
+
+	std::memcpy(tbuf, msg.data(), msg.size());
+	return static_cast<s32>(msg.size());
 }
 
 void WinRTHost::ProcessEventQueue() {
@@ -514,7 +527,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 
 				VMManager::SetState(VMState::Running);
 
-				GetMTGS().WaitForOpen();
+				MTGS::WaitForOpen();
 				InputManager::ReloadDevices();
 			});
 		}
@@ -547,7 +560,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 			GameList::Refresh(false);
 			ImGuiManager::InitializeFullscreenUI();
 
-			GetMTGS().WaitForOpen();
+			MTGS::WaitForOpen();
 		}
 
 		window.Dispatcher().RunAsync(CoreDispatcherPriority::Normal, []() {
@@ -623,7 +636,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 	void OnKeyInput(const IInspectable&, const winrt::Windows::UI::Core::CharacterReceivedEventArgs& args) {
 		if (ImGuiManager::WantsTextInput())
 		{
-			GetMTGS().RunOnGSThread([c = args.KeyCode()]() {
+			MTGS::RunOnGSThread([c = args.KeyCode()]() {
 				if (!ImGui::GetCurrentContext())
 					return;
 

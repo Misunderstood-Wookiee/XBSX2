@@ -1192,7 +1192,7 @@ void FullscreenUI::DrawLandingTemplate(ImVec2* menu_pos, ImVec2* menu_size)
 		ImGui::Image(s_app_icon_texture->GetNativeHandle(), ImVec2(image_size, image_size));
 	}
 
-	const char version_txt[] = "v2.0.2";
+	const char version_txt[] = "v2.0.3";
 	ImGui::PushFont(g_medium_font);
 	ImGui::SetCursorPos(
 		ImVec2(LayoutScale(10.0f), ImGui::GetWindowHeight() - LayoutScale(20.0f)));
