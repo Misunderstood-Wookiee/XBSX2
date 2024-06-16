@@ -437,10 +437,6 @@ void VMManager::Internal::CPUThreadShutdown()
 	MTGS::ShutdownThread();
 	GSJoinSnapshotThreads();
 
-	ShutdownCPUProviders();
-
-	SysMemory::Release();
-
 #if _WIN32 && !WINRT_XBOX
 	CoUninitialize();
 #endif
